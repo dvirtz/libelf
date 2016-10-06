@@ -1,0 +1,6 @@
+sudo: off
+language: c
+
+script:
+  - cmake . -B_Release -DCMAKE_BUILD_TYPE=Release
+  - cmake --build _Release
