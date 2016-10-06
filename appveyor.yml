@@ -1,0 +1,14 @@
+platform:
+  - Win32
+  - x64
+  
+configuration: Release
+
+build_script:
+  - if "%platform%"=="Win32" set "CMAKE_GENERATOR_NAME=Visual Studio 14 2015"
+  - if "%platform%"=="x64" set "CMAKE_GENERATOR_NAME=Visual Studio 14 2015 Win64"
+  - cmake . -B_build -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%CONFIGURATION%
+  - cmake --build _build --config %CONFIGURATION%
+  
+test_script:
+  - cmake --build _build --config Release --target RUN_TESTS
