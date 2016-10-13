@@ -17,6 +17,9 @@
 
 # @(#) $Id: aclocal.m4,v 1.28 2008/05/23 08:17:56 michael Exp $
 
+include(CMakeDependentOption)
+include(CMakeDependentVariable)
+
 # mr_PACKAGE(package-name)
 macro(mr_PACKAGE PACKAGE)
     file(READ VERSION VERSION)
@@ -56,7 +59,6 @@ macro(mr_ENABLE_NLS)
         endif() 
         string(REGEX REPLACE "^[^${pathSep}]*openwin[^${pathSep}]*" "" mr_PATH $ENV{PATH})
         set(ENV{mr_PATH} ${mr_PATH})
-        message(STATUS "Checking for dgettext...")
         check_c_source_compiles([=[
         #include <libintl.h>
         int main()
@@ -65,13 +67,13 @@ macro(mr_ENABLE_NLS)
             return 0;
         }]=]
         mr_cv_func_dgettext)
+        message(STATUS "Checking for dgettext... ${mr_cv_func_dgettext}")
         if(mr_cv_func_dgettext)
             ac_path_prog(MSGFMT msgfmt FALSE mr_PATH)
             if(MSGFMT)
                 ac_path_prog(GMSGFMT gmsgfmt ${MSGFMT} mr_PATH)
                 ac_path_prog(XGETTEXT xgettext xgettext mr_PATH)
                 ac_path_prog(MSGMERGE msgmerge msgmerge mr_PATH)
-                message(STATUS "Checking for GNU gettext...")
                 check_c_source_compiles([=[
                 int main()
                 {
@@ -79,9 +81,8 @@ macro(mr_ENABLE_NLS)
                     return _nl_msg_cat_cntr;
                 }]=]
                 mr_cv_gnu_gettext)
+                message(STATUS "Checking for GNU gettext... ${mr_cv_gnu_gettext}")
                 if(mr_cv_gnu_gettext)
-                    message(STATUS "Checking for losing catgets-based GNU gettext...")
-                    message(STATUS "Checking for GNU gettext...")
                     check_c_source_compiles([=[
                     int main()
                     {
@@ -89,13 +90,13 @@ macro(mr_ENABLE_NLS)
                         return _msg_tbl_length;
                     }]=]
                     mr_cv_catgets_based_gettext)
+                    message(STATUS "Checking for losing catgets-based GNU gettext... ${mr_cv_catgets_based_gettext}")
                     if(mr_cv_catgets_based_gettext)
                 	    # This loses completely. Turn it off and use catgets.
                 	    string(REGEX REPLACE "-lintl" "" LIBS ${LIBS})
                 	    set(mr_cv_func_dgettext FALSE)
                 	else()
 	                    # Is there a better test for this case?
-	                    message(STATUS "Checking for pure GNU gettext...")
                         check_c_source_compiles([=[
                         int main()
                         {
@@ -103,6 +104,7 @@ macro(mr_ENABLE_NLS)
                             return gettext();
                         }]=]
                         mr_cv_pure_gnu_gettext)
+	                    message(STATUS "Checking for pure GNU gettext... ${mr_cv_pure_gnu_gettext}")
                         if(mr_cv_pure_gnu_gettext)
                             set(CATOBJEXT ".gmo")
                             set(localedir "${CMAKE_INSTALL_PREFIX}/share/locale")
@@ -125,7 +127,6 @@ macro(mr_ENABLE_NLS)
         if(mr_cv_func_dgettext)
             set(HAVE_DGETTEXT TRUE CACHE BOOL "have dgettext")
         else()
-            message(STATUS "Checking for catgets...")
             check_c_source_compiles([=[
             #include <nl_types.h>
             int main()
@@ -134,12 +135,14 @@ macro(mr_ENABLE_NLS)
                 return 0;
             }]=]
             mr_cv_func_catgets)
+            message(STATUS "Checking for catgets... ${mr_cv_func_catgets}")
             if(mr_cv_func_catgets)
                 ac_path_prog(GENCAT gencat FALSE mr_PATH)
                 if(GENCAT)
                     set(HAVE_CATGETS TRUE CACHE BOOL "have catgets")
                     ac_path_prog(GMSGFMT "gmsgfmt msgfmt" msgfmt mr_PATH)
                     ac_path_prog(XGETTEXT xgettext xgettext mr_PATH)
+					ac_path_prog(MSGMERGE msgmerge msgmerge mr_PATH)
                     set(CATOBJEXT ".cat")
                     set(INSTOBJEXT ".cat")
                     set(localedir "${CMAKE_INSTALL_PREFIX}/lib/locale")
@@ -179,7 +182,7 @@ macro(mr_TARGET_ELF)
       }
       n = fread(buf, 1, sizeof(buf), fp);
       if (n >= 52
-       && buf[0] == '\177'
+       && buf[0] == '\\177'
        && buf[1] == 'E'
        && buf[2] == 'L'
        && buf[3] == 'F') {
@@ -188,6 +191,7 @@ macro(mr_TARGET_ELF)
       exit(1);
     }]=]
     mr_cv_target_elf)
+    message(STATUS "Checking for native ELF system... ${mr_cv_target_elf}")
 endmacro()
 
 macro(mr_ENABLE_SHARED)
@@ -195,6 +199,16 @@ macro(mr_ENABLE_SHARED)
     set(mr_enable_shared ${shared})
     message(STATUS "Checking whether to build a shared library... ${mr_enable_shared}")
     set(DO_SHLIB ${mr_enable_shared})
+	cmake_dependent_option(gnu-names "use GNU library naming conventions" FALSE "DO_SHLIB" FALSE)
+	if((CMAKE_SYSTEM_NAME STREQUAL "Linux") OR (CMAKE_SYSTEM_NAME STREQUAL "QNX"))
+		set(elf_extra_libraries_default "c")
+	endif()
+	cmake_dependent_variable(elf_extra_libraries "Libraries to link to the shared library" STRING "${elf_extra_libraries_default}" "DO_SHLIB" "")
+	if(DO_SHLIB)
+		mr_TARGET_ELF()		
+		set(mr_enable_gnu_names ${gnu-names})
+		message(STATUS "Checking whether GNU naming conventions are requested..." ${mr_enable_gnu_names})
+	endif()
 endmacro()
 
 macro(mr_ENABLE_DEBUG)

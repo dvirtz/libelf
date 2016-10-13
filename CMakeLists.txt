@@ -15,3 +15,6 @@ include(configure.cmake)
 include_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(lib)
+if(UNIX)
+	add_subdirectory(po)
+endif()

@@ -3,6 +3,12 @@ include(aclocal.cmake)
 
 mr_PACKAGE(libelf)
 
+# NOTE: there must be at least one .po file!
+file(GLOB ALL_LINGUAS 
+	RELATIVE "${CMAKE_SOURCE_DIR}/po"
+	"po/*.po")
+string(REPLACE ".po" "" ALL_LINGUAS "${ALL_LINGUAS}")
+
 # Assuming all arguments have already been processed...
 string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" MAJOR ${VERSION})
 string(REGEX REPLACE "[0-9]+\\.([0-9]+)\\.[0-9]+" "\\1" MINOR ${VERSION})
@@ -346,10 +352,9 @@ endif()
 # Check for NLS support.
 mr_ENABLE_NLS()
 # this is for gmo2msg...
-set(LIBINTL)
-find_library(intl intl)
-if(intl)
-    list(APPEND LIBINTL "-lintl")
+ac_check_lib(intl gettext)
+if(HAVE_INTL)
+	set(LIBINTL "intl")
 endif() 
 
 # Check for shared library support.

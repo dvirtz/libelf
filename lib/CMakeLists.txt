@@ -1,3 +1,5 @@
+include(GNUInstallDirs)
+
 set_source_group(SRCS1 "generic sources" begin.c cntl.c end.c errmsg.c errno.c fill.c flag.c getarhdr.c
 	getarsym.c getbase.c getdata.c getident.c getscn.c hash.c kind.c
 	ndxscn.c newdata.c newscn.c next.c nextscn.c rand.c rawdata.c
@@ -35,42 +37,64 @@ target_include_directories(elf PRIVATE ${CMAKE_BINARY_DIR}/libelf)
 
 target_compile_definitions(elf PRIVATE HAVE_CONFIG_H)
 
-set(SUFFIX $<$<EQUAL:${CMAKE_SIZEOF_VOID_P},8>:64>)
-set(LIBDIR lib${SUFFIX})
-set(BINDIR bin${SUFFIX})
-
 install(TARGETS elf 
-	RUNTIME DESTINATION ${BINDIR}		
-	LIBRARY DESTINATION ${LIBDIR}
-	ARCHIVE DESTINATION ${LIBDIR})
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}		
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if(DO_SHLIB)
     add_library(elf_shared SHARED ${SRCS1} ${SRCS2} ${SRCS3} ${SRCS4} ${SRCS5} ${SRCS64} ${SRCS_V} ${HDRS_V} ${HDRS} ${AUXHDRS} ${PRIVHDRS}
 		$<$<BOOL:${MSVC}>:libelf.def>)
     
-    set_target_properties(elf_shared PROPERTIES 
-        OUTPUT_NAME elf
-        VERSION ${VERSION}
-        SOVERSION ${MAJOR})
-    
+    if (UNIX AND mr_enable_gnu_names)
+		set_target_properties(elf_shared PROPERTIES 
+			OUTPUT_NAME elf-${VERSION}
+			NO_SONAME TRUE)
+		
+		add_custom_command(TARGET elf_shared
+			POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_FILE_NAME:elf_shared> libelf.so.${MAJOR}
+            COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_FILE_NAME:elf_shared> libelf.so)
+
+	else()
+		set_target_properties(elf_shared PROPERTIES 
+			OUTPUT_NAME elf
+			VERSION ${VERSION}
+			SOVERSION ${MAJOR})	
+	endif()
+
     target_include_directories(elf_shared PRIVATE ${CMAKE_BINARY_DIR}/libelf)
     
     target_compile_definitions(elf_shared PRIVATE HAVE_CONFIG_H)
+
+	target_link_libraries(elf_shared PUBLIC
+		"${elf_extra_libraries}")
     
     install(TARGETS elf_shared 
-		RUNTIME DESTINATION ${BINDIR}		
-		LIBRARY DESTINATION ${LIBDIR}
-		ARCHIVE DESTINATION ${LIBDIR})
+		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}		
+		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 endif()
 
 install(FILES ${HDRS} ${AUXHDRS} elf_repl.h
     DESTINATION include/libelf)
+
+file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_compat.cmake
+	CONTENT 
+"foreach(file ${HDRS})
+    file(WRITE \${file}
+        \"#include <libelf/\${file}>\")
+	file(INSTALL \${file} 
+		DESTINATION \"${CMAKE_INSTALL_PREFIX}/include\")
+endforeach()"
+)
     
 if(DO_COMPAT)
-    foreach(file ${HDRS})
-        configure_file(compat_header.h.in.cmake compat_${file})
-        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/compat_${file}
-            DESTINATION include 
-            RENAME ${file})
-    endforeach()
+	install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_compat.cmake)
 endif()
+
+add_custom_target(install-compat
+	COMMAND ${CMAKE_COMMAND} -P install_compat.cmake
+	SOURCES install_compat.cmake)
+	
