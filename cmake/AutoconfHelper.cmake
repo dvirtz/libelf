@@ -42,45 +42,33 @@ function (ac_get_version libname)
   set(${libname_upper}_SOVERSION "${${libname_upper}_SOVERSION}" PARENT_SCOPE)
 endfunction()
 
-
-# Also from mono's source code
 # Implementation of AC_CHECK_HEADERS
-# In addition, it also records the list of variables in the variable 
-# 'autoheader_vars', and for each variable, a documentation string in the
-# variable ${var}_doc
+# For each given system header file header-file in the blank-separated argument list that exists, 
+# define HAVE_header-file (in all capitals). 
+# This function caches its result in the ac_cv_header_header-file variable, 
+# with characters not suitable for a variable name mapped to underscores.
 function(ac_check_headers)
   foreach (header ${ARGV})
-	string(TOUPPER ${header} header_var)
-	string(REPLACE "." "_" header_var ${header_var})
-	string(REPLACE "/" "_" header_var ${header_var})
+	string(REGEX REPLACE "[\./]" "_" header_var ${header})
+	set(cache_var "ac_cv_header_${header_var}")
+	string(TOUPPER ${header_var} header_var)
 	set(header_var "HAVE_${header_var}")
-	check_include_file (${header} ${header_var})
-	set("${header_var}_doc" "Define to 1 if you have the <${header}> header file." PARENT_SCOPE)
-	if (${header_var})
-	  set("${header_var}_defined" "1" PARENT_SCOPE)
-	endif()
-	set("${header_var}_val" "1" PARENT_SCOPE)
-	set (autoheader_vars ${autoheader_vars} ${header_var})
+	check_include_file (${header} ${cache_var})
+	set(${header_var} ${cache_var} PARENT_SCOPE)
   endforeach()
-  set (autoheader_vars ${autoheader_vars} PARENT_SCOPE)
 endfunction()
 
-# Function taken from mono's source code
+# Implementation of AC_CHECK_FUNCS 
+# For each function given in the argument list, define HAVE_function (in all capitals) if it is available. 
+# This macro caches its result in the ac_cv_func_function variable.
 function (ac_check_funcs)
   foreach (func ${ARGV})
     string(TOUPPER ${func} var)
     set(var "HAVE_${var}")
-    set(${var})
-    check_function_exists (${func} ${var})
-    set("${var}_doc" "Define to 1 if you have the '${func}' function." PARENT_SCOPE)
-    if (${var})
-      set("${var}_defined" "1" PARENT_SCOPE)
-      set(${var} yes PARENT_SCOPE)
-    endif()
-    set("${var}_val" "1" PARENT_SCOPE)
-    set (autoheader_vars ${autoheader_vars} ${var})
+	set(cache_var "ac_cv_func_${func}")
+    check_function_exists (${func} ${cache_var})
+	set(${var} ${cache_var} PARENT_SCOPE)
   endforeach()
-  set (autoheader_vars ${autoheader_vars} PARENT_SCOPE)
 endfunction()
 
 
