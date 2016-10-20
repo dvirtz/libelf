@@ -18,27 +18,27 @@ string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" PATCH ${VERSION})
 ac_header_stdc()
 ac_check_headers(unistd.h stdint.h fcntl.h)
 ac_check_headers(elf.h sys/elf.h link.h sys/link.h)
-ac_try_compile([=[
-#if HAVE_ELF_H
-#include <elf.h>
-#elif HAVE_SYS_ELF_H
-#include <sys/elf.h>
-#endif
-
-int main()
-{
-	Elf32_Ehdr dummy;
-    return 0;
-}]=]
-libelf_cv_elf_h_works)
-
-set(ac_cv_header_elf_h ${libelf_cv_elf_h_works})
-set(ac_cv_header_sys_elf_h ${libelf_cv_elf_h_works})
 
 if(ac_cv_header_elf_h)
    set(__LIBELF_HEADER_ELF_H <elf.h>)
 elseif(ac_cv_header_sys_elf_h)
    set(__LIBELF_HEADER_ELF_H <sys/elf.h>)
+endif()
+
+ac_try_compile("
+#include ${__LIBELF_HEADER_ELF_H}
+
+int main()
+{
+	Elf32_Ehdr dummy;
+    return 0;
+}"
+libelf_cv_elf_h_works)
+
+if(NOT libelf_cv_elf_h_works)
+	set(ac_cv_header_elf_h FALSE)
+	set(ac_cv_header_sys_elf_h FALSE)
+	unset(__LIBELF_HEADER_ELF_H)
 endif()
 
 ac_check_headers(ar.h libelf.h nlist.h gelf.h)
