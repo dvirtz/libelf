@@ -1,4 +1,4 @@
-LIBRARY libelf
+LIBRARY elf
 VERSION 0.8
 EXPORTS
 	elf_begin
