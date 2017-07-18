@@ -219,6 +219,13 @@ extern Elf_Data *elf32_xlatetof __P((Elf_Data *__dst, const Elf_Data *__src,
 extern Elf_Data *elf32_xlatetom __P((Elf_Data *__dst, const Elf_Data *__src,
 	unsigned __encode));
 
+
+/* SN-Carlos: Utilities to get string representations */
+#ifdef _WIN32
+extern void elf32_gethdr_literals(Elf32_Ehdr *elf_ehdr,
+                                  Elf_Ehdr_Literal *eh_literals);
+#endif /* _WIN32 */
+
 /*
  * Additional functions found on Solaris
  */
@@ -245,6 +252,12 @@ extern Elf_Data *elf64_xlatetom __P((Elf_Data *__dst, const Elf_Data *__src,
  * Additional functions found on Solaris
  */
 extern long elf64_checksum __P((Elf *__elf));
+
+/* SN-Carlos: Utilities to get string representations */
+#ifdef _WIN32
+extern void elf64_gethdr_literals(Elf64_Ehdr *elf_ehdr,
+                                  Elf_Ehdr_Literal *eh_literals);
+#endif /* _WIN32 */
 
 #endif /* __LIBELF64 */
 

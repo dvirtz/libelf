@@ -80,3 +80,5 @@ EXPORTS
 	elf_getshnum
 	elf_getshstrndx
 	elfx_update_shstrndx
+ 	elf32_gethdr_literals     ; /* SN-Carlos: Get type as string */
+ 	elf64_gethdr_literals     ; /* SN-Carlos: Get type as string */

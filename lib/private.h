@@ -117,7 +117,17 @@ struct ar_hdr {
 
 #endif /* HAVE_AR_H */
 
+/* SN-Carlos: Use all defined symbols */
+#ifdef HAVE_ELF_H
+#include <elf.h>
+#endif /* HAVE_ELF_H */
+#ifdef HAVE_LIBELF_H
 #include <libelf.h>
+#else
+#ifdef HAVE_LIBELF_LIBELF_H
+#include <libelf/libelf.h>
+#endif /* HAVE_LIBELF_LIBELF_H */
+#endif /* HAVE_LIBELF_H */
 
 #if HAVE_STRUCT_NLIST_DECLARATION
 # undef nlist

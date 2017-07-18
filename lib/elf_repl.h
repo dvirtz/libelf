@@ -170,6 +170,7 @@ typedef struct {
 /* these are probably obsolete: */
 #define ELFOSABI_ARM		97	/* ARM */
 #define ELFOSABI_STANDALONE	255	/* standalone (embedded) application */
+#define ELFOSABI_NUM         16 /* Number of definitions */
 
 
 /*
@@ -988,6 +989,20 @@ typedef struct {
 #define CA_SUNW_NULL	0	/* c_un ignored */
 #define CA_SUNW_HW_1	1	/* c_un.c_val */
 #define CA_SUNW_SF_1	2	/* c_un.c_val */
+
+/* SN-Carlos: Literal representation for various ELF header fields */
+typedef struct {
+  char *e_ident_file_id;        /* e_ident: EI_MAG0 EI_MAG1 EI_MAG2 EI_MAG3*/
+  char *e_ident_file_class;     /* e_ident: EI_CLASS */
+  char *e_ident_data_encoding;  /* e_ident: EI_DATA */
+  char *e_ident_file_version;   /* e_ident: EI_VERSION */
+  char *e_ident_os_abi_s;       /* e_ident: EI_OSABI */
+  char *e_ident_os_abi_l;       /* e_ident: EI_OSABI */
+  char *e_ident_abi_version;    /* e_ident: EI_ABIVERSION */
+  char *e_type;                 /* e_type */
+  char *e_machine_s;            /* e_machine (short name) */
+  char *e_machine_l;            /* e_machine (long name) */
+} Elf_Ehdr_Literal;
 
 #ifdef __cplusplus
 }
